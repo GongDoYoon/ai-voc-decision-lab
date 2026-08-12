@@ -1,0 +1,28 @@
+import type { Feedback } from "@/lib/voc-engine";
+
+export const sampleFeedback: Feedback[] = [
+  { id: "VOC-001", text: "처음 가입하고 뭘 해야 할지 몰라서 튜토리얼을 다시 찾았어요.", channel: "앱 리뷰", segment: "신규", severity: 3 },
+  { id: "VOC-002", text: "구글 로그인이 두 번 실패해서 결국 이메일로 가입했습니다.", channel: "고객센터", segment: "신규", severity: 4 },
+  { id: "VOC-003", text: "설정 저장을 눌렀는데 다음 날 전부 초기화되어 있었어요.", channel: "앱 리뷰", segment: "활성", severity: 5 },
+  { id: "VOC-004", text: "AI 요약이 왜 이런 결론을 냈는지 출처나 근거를 보고 싶어요.", channel: "인터뷰", segment: "파워유저", severity: 5 },
+  { id: "VOC-005", text: "노션으로 내보내면 표 서식이 깨져서 다시 손봐야 합니다.", channel: "고객센터", segment: "팀", severity: 4 },
+  { id: "VOC-006", text: "동기화 중이라는 표시만 나오고 10분째 멈춰 있습니다.", channel: "앱 리뷰", segment: "활성", severity: 5 },
+  { id: "VOC-007", text: "팀원에게 결과 링크를 공유할 때 코멘트도 같이 남기고 싶어요.", channel: "설문", segment: "팀", severity: 3 },
+  { id: "VOC-008", text: "AI가 고객 이름을 잘못 적었는데 어디서 가져온 정보인지 모르겠어요.", channel: "인터뷰", segment: "팀", severity: 5 },
+  { id: "VOC-009", text: "첫 화면 용어가 어려워서 샘플 프로젝트를 눌러도 이해가 안 됐습니다.", channel: "사용성 테스트", segment: "신규", severity: 4 },
+  { id: "VOC-010", text: "업로드가 99%에서 실패하고 작성한 태그도 함께 날아갔습니다.", channel: "고객센터", segment: "활성", severity: 5 },
+  { id: "VOC-011", text: "슬랙 알림에서 바로 담당자를 지정할 수 있으면 좋겠어요.", channel: "설문", segment: "팀", severity: 3 },
+  { id: "VOC-012", text: "추천 우선순위가 정확한지 판단할 설명이 전혀 없습니다.", channel: "인터뷰", segment: "파워유저", severity: 4 },
+  { id: "VOC-013", text: "초대 메일 인증 링크가 만료돼 시작 단계에서 포기할 뻔했습니다.", channel: "고객센터", segment: "신규", severity: 4 },
+  { id: "VOC-014", text: "엑셀 다운로드가 되지만 한글이 깨져 팀 보고에 쓸 수 없어요.", channel: "앱 리뷰", segment: "팀", severity: 4 },
+  { id: "VOC-015", text: "모바일에서 수정한 내용이 웹에 반영되지 않고 이전 버전이 보입니다.", channel: "고객센터", segment: "활성", severity: 5 },
+  { id: "VOC-016", text: "요약 문장 일부가 원문에 없는 내용이라 신뢰하기 어렵습니다.", channel: "인터뷰", segment: "파워유저", severity: 5 },
+  { id: "VOC-017", text: "온보딩 체크리스트가 있으면 팀원 교육 시간이 줄 것 같아요.", channel: "설문", segment: "팀", severity: 2 },
+  { id: "VOC-018", text: "공유 권한이 보기와 편집 두 개뿐이라 외부 파트너에게 보내기 불안합니다.", channel: "인터뷰", segment: "팀", severity: 4 },
+  { id: "VOC-019", text: "자동 저장 표시가 떴는데 새로고침 후 메모가 사라졌습니다.", channel: "앱 리뷰", segment: "활성", severity: 5 },
+  { id: "VOC-020", text: "결과마다 원문 링크가 붙으면 검수하는 시간이 훨씬 짧아질 것 같아요.", channel: "설문", segment: "파워유저", severity: 3 },
+  { id: "VOC-021", text: "처음 연결할 데이터 소스를 고르는 화면에서 예시가 필요합니다.", channel: "사용성 테스트", segment: "신규", severity: 3 },
+  { id: "VOC-022", text: "팀 대시보드를 PDF로 내보내 고객사에 공유하고 싶습니다.", channel: "고객센터", segment: "팀", severity: 3 },
+  { id: "VOC-023", text: "분석 실행 중 오류가 났는데 재시도 버튼이 없어 처음부터 다시 했어요.", channel: "앱 리뷰", segment: "활성", severity: 4 },
+  { id: "VOC-024", text: "AI 추천이 틀렸을 때 이유를 선택해 피드백할 수 있으면 좋겠습니다.", channel: "인터뷰", segment: "파워유저", severity: 4 },
+];
