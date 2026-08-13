@@ -2,6 +2,8 @@
 
 고객 피드백 24건을 **근거가 연결된 문제 신호 → 우선순위 → PRD → 품질 평가 → 출시 판단**으로 바꾸는 AI 제품 기획 포트폴리오입니다.
 
+**[라이브 데모 실행하기](https://ai-voc-decision-lab-gdy.hakukaka1212.chatgpt.site)**
+
 ![AI VOC Decision Lab social preview](./public/og.png)
 
 ## 왜 만들었나
