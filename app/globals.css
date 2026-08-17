@@ -360,6 +360,140 @@ a {
   min-height: 760px;
 }
 
+.live-control {
+  background: var(--ink);
+  box-shadow: 0 26px 70px rgba(23, 43, 36, 0.12);
+  color: var(--paper);
+  margin: 0 auto 22px;
+  max-width: 1320px;
+  padding: 26px;
+}
+
+.live-control-head {
+  align-items: center;
+  border-bottom: 1px solid var(--dark-line);
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 20px;
+}
+
+.live-control-head h3 {
+  font-size: 24px;
+  letter-spacing: -0.035em;
+  margin: 7px 0 0;
+}
+
+.live-control-head .section-index { color: var(--lime); margin: 0; }
+
+.connection-state {
+  align-items: center;
+  border: 1px solid var(--dark-line);
+  color: #8fa198;
+  display: flex;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  gap: 8px;
+  letter-spacing: .08em;
+  padding: 9px 11px;
+}
+
+.connection-state i {
+  background: #8a9690;
+  border-radius: 50%;
+  height: 6px;
+  width: 6px;
+}
+
+.connection-state.connected { border-color: rgba(215, 255, 95, .42); color: var(--lime); }
+.connection-state.connected i { background: var(--lime); box-shadow: 0 0 12px var(--lime); }
+
+.live-control-grid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: minmax(270px,.72fr) minmax(0,1.6fr);
+  margin-top: 1px;
+}
+
+.connection-card,
+.voc-input-card {
+  background: var(--ink-soft);
+  border: 1px solid var(--dark-line);
+  padding: 22px;
+}
+
+.connection-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.connection-card label,
+.voc-input-card label {
+  color: #9eaea6;
+  display: block;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  letter-spacing: .08em;
+  margin-bottom: 9px;
+  text-transform: uppercase;
+}
+
+.connection-card input,
+.connection-card select,
+.voc-input-card textarea {
+  background: #07110f;
+  border: 1px solid var(--dark-line);
+  border-radius: 0;
+  color: var(--paper);
+  font: 12px/1.6 var(--font-geist-mono), monospace;
+  outline: 0;
+  padding: 12px 13px;
+  width: 100%;
+}
+
+.connection-card input:focus,
+.connection-card select:focus,
+.voc-input-card textarea:focus {
+  border-color: var(--lime);
+}
+
+.connection-card select { margin-bottom: 14px; }
+.connection-card input { margin-bottom: 17px; }
+.connection-card p { color: #71837a; font-size: 9px; line-height: 1.65; margin: auto 0 0; }
+
+.disconnect-button,
+.sample-button {
+  background: transparent;
+  border: 1px solid var(--dark-line);
+  color: #aebbb5;
+  cursor: pointer;
+  font-size: 10px;
+  margin-top: 13px;
+  padding: 11px 13px;
+}
+
+.disconnect-button:hover,
+.disconnect-button:focus-visible,
+.sample-button:hover,
+.sample-button:focus-visible { border-color: var(--lime); color: var(--lime); }
+
+.voc-input-card textarea {
+  min-height: 162px;
+  resize: vertical;
+}
+
+.input-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.input-actions .sample-button { margin-top: 0; }
+.input-actions .primary-button { min-width: 170px; padding: 13px 16px; }
+.input-actions .primary-button:disabled { cursor: wait; opacity: .58; transform: none; }
+.run-message { color: #91a39a; font-size: 10px; line-height: 1.55; margin: 13px 0 0; min-height: 16px; }
+
 .app-sidebar {
   background: var(--ink-soft);
   color: var(--paper);
@@ -598,6 +732,11 @@ footer > a { color: var(--lime); justify-self: end; }
   .workspace,
   .method { padding: 80px 20px; }
   .app-shell { grid-template-columns: 1fr; }
+  .live-control { padding: 18px; }
+  .live-control-head { align-items: flex-start; gap: 18px; }
+  .live-control-grid { grid-template-columns: 1fr; }
+  .input-actions { align-items: stretch; flex-direction: column; }
+  .input-actions .primary-button { width: 100%; }
   .app-sidebar { display: grid; grid-template-columns: repeat(3, 1fr); }
   .dataset-title { grid-column: 1 / -1; }
   .sidebar-label,

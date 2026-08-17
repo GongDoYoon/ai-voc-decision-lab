@@ -14,14 +14,29 @@ export async function POST(request: Request) {
     // Empty bodies intentionally use the safe demo dataset.
   }
 
-  if (feedback.length > 500) {
+  if (feedback.length > 200) {
     return Response.json(
-      { error: "한 번에 최대 500건까지 분석할 수 있습니다." },
+      { error: "한 번에 최대 200건까지 분석할 수 있습니다." },
+      { status: 400 },
+    );
+  }
+
+  if (feedback.some((item) => !item.id || !item.text || item.text.length > 1000)) {
+    return Response.json(
+      { error: "VOC ID와 내용을 확인해주세요. 한 항목은 최대 1,000자입니다." },
       { status: 400 },
     );
   }
 
   const localAnalysis = analyzeFeedback(feedback);
-  const result = await enhanceAnalysisWithLlm(localAnalysis, feedback);
+  const personalApiKey = request.headers.get("x-openai-api-key")?.trim();
+  const requestedModel = request.headers.get("x-openai-model")?.trim();
+  const allowedModels = new Set(["gpt-5.4-nano", "gpt-5.4-mini", "gpt-5.4"]);
+  const result = await enhanceAnalysisWithLlm(localAnalysis, feedback, {
+    apiKey: personalApiKey || undefined,
+    model: requestedModel && allowedModels.has(requestedModel)
+      ? requestedModel
+      : undefined,
+  });
   return Response.json(result);
 }

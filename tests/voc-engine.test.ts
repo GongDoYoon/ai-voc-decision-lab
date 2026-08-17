@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { goldenCases } from "../data/golden-set.ts";
 import { sampleFeedback } from "../data/sample-feedback.ts";
+import { normalizeLlmThemes } from "../lib/llm-provider.ts";
 import { analyzeFeedback, buildPrd, classifyText, evaluateGoldenSet } from "../lib/voc-engine.ts";
 
 test("classifies core product signals and prompt injection", () => {
@@ -28,4 +29,24 @@ test("generates a scoped PRD and reproducible eval score", () => {
   assert.equal(evaluation.metrics.overall, 91);
   assert.equal(evaluation.metrics.citationValidity, 100);
   assert.equal(evaluation.cases.filter((item) => item.pass).length, 7);
+});
+
+test("keeps personal AI analysis grounded in supplied VOC IDs", () => {
+  const feedback = sampleFeedback.slice(0, 4);
+  const analysis = normalizeLlmThemes(
+    [
+      {
+        key: "data-loss",
+        label: "데이터 유실",
+        summary: "저장 실패가 반복됩니다.",
+        recommendation: "복구 흐름을 제공합니다.",
+        evidenceIds: ["VOC-003", "VOC-999", "VOC-003"],
+      },
+    ],
+    feedback,
+  );
+
+  assert.deepEqual(analysis.themes[0].evidenceIds, ["VOC-003"]);
+  assert.equal(analysis.themes[0].count, 1);
+  assert.ok(analysis.unclassifiedIds.includes("VOC-001"));
 });

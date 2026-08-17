@@ -7,7 +7,8 @@ import {
   analyzeFeedback,
   buildPrd,
   evaluateGoldenSet,
-  type ThemeKey,
+  type AnalysisResult,
+  type Feedback,
 } from "@/lib/voc-engine";
 
 type View = "discover" | "prd" | "evaluate";
@@ -25,32 +26,129 @@ const metricDescriptions = {
   safetyPassRate: "프롬프트 인젝션 방어 시나리오 통과율",
 };
 
+interface AnalyzeApiResult {
+  mode: "local" | "llm";
+  analysis: AnalysisResult;
+  model?: string;
+  warning?: string;
+  error?: string;
+}
+
+function parseFeedbackInput(value: string): Feedback[] {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 200)
+    .map((line, index) => {
+      const severityMatch = line.match(/^\[([1-5])\]\s*/);
+      const severity = Number(severityMatch?.[1] ?? 3) as Feedback["severity"];
+      return {
+        id: `USER-${String(index + 1).padStart(3, "0")}`,
+        text: line.replace(/^\[[1-5]\]\s*/, "").slice(0, 1000),
+        channel: "직접 입력",
+        segment: "사용자 VOC",
+        severity,
+      };
+    });
+}
+
 export default function Home() {
-  const analysis = useMemo(() => analyzeFeedback(sampleFeedback), []);
-  const prd = useMemo(() => buildPrd(analysis), [analysis]);
+  const baselineAnalysis = useMemo(() => analyzeFeedback(sampleFeedback), []);
   const evaluation = useMemo(
     () => evaluateGoldenSet(goldenCases, sampleFeedback),
     [],
   );
+  const [analysis, setAnalysis] = useState(baselineAnalysis);
+  const [activeFeedback, setActiveFeedback] = useState<Feedback[]>(sampleFeedback);
   const [view, setView] = useState<View>("discover");
-  const [selectedTheme, setSelectedTheme] = useState<ThemeKey>(
-    analysis.themes[0].key,
-  );
+  const [selectedTheme, setSelectedTheme] = useState<string>(baselineAnalysis.themes[0].key);
   const [hasRun, setHasRun] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [model, setModel] = useState("gpt-5.4-mini");
+  const [rawFeedback, setRawFeedback] = useState("");
+  const [analysisMode, setAnalysisMode] = useState<"local" | "llm">("local");
+  const [isRunning, setIsRunning] = useState(false);
+  const [runMessage, setRunMessage] = useState("샘플 24건으로 즉시 체험할 수 있습니다.");
+
+  const prd = useMemo(
+    () => buildPrd(analysis, selectedTheme),
+    [analysis, selectedTheme],
+  );
 
   const selected =
     analysis.themes.find((theme) => theme.key === selectedTheme) ??
     analysis.themes[0];
-  const evidence = sampleFeedback.filter((item) =>
+  const evidence = activeFeedback.filter((item) =>
     selected.evidenceIds.includes(item.id),
   );
 
-  function runAnalysis() {
-    setHasRun(true);
-    setView("discover");
-    document
-      .getElementById("workspace")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  async function runAnalysis() {
+    const feedback = rawFeedback.trim()
+      ? parseFeedbackInput(rawFeedback)
+      : sampleFeedback;
+
+    if (feedback.length < 3) {
+      setRunMessage("분석하려면 VOC를 세 줄 이상 입력해주세요.");
+      return;
+    }
+
+    setIsRunning(true);
+    setRunMessage(apiKey ? "개인 AI가 VOC를 분석하고 있습니다…" : "로컬 엔진이 VOC를 분석하고 있습니다…");
+
+    try {
+      const headers: Record<string, string> = {
+        "content-type": "application/json",
+        "x-openai-model": model,
+      };
+      if (apiKey.trim()) headers["x-openai-api-key"] = apiKey.trim();
+
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ feedback }),
+      });
+      const result = (await response.json()) as AnalyzeApiResult;
+      if (!response.ok || result.error) {
+        throw new Error(result.error || "분석 요청에 실패했습니다.");
+      }
+
+      setAnalysis(result.analysis);
+      setActiveFeedback(feedback);
+      setSelectedTheme(result.analysis.themes[0]?.key ?? "");
+      setAnalysisMode(result.mode);
+      setHasRun(true);
+      setView("discover");
+      setRunMessage(
+        result.mode === "llm"
+          ? `${result.model ?? model} 연결 완료 · 실제 AI 분석 결과입니다.`
+          : result.warning
+            ? `${result.warning} 로컬 분석 결과로 안전하게 전환했습니다.`
+            : "API 키 없이 로컬 분석을 완료했습니다.",
+      );
+      document
+        .getElementById("workspace")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      setRunMessage(error instanceof Error ? error.message : "분석 중 오류가 발생했습니다.");
+    } finally {
+      setIsRunning(false);
+    }
+  }
+
+  function resetToSample() {
+    setRawFeedback("");
+    setAnalysis(baselineAnalysis);
+    setActiveFeedback(sampleFeedback);
+    setSelectedTheme(baselineAnalysis.themes[0].key);
+    setAnalysisMode("local");
+    setRunMessage("샘플 24건을 다시 불러왔습니다.");
+  }
+
+  function disconnectAi() {
+    setApiKey("");
+    setAnalysisMode("local");
+    setRunMessage("개인 API 키를 메모리에서 지웠습니다.");
   }
 
   return (
@@ -107,7 +205,7 @@ export default function Home() {
         <aside className="signal-panel" aria-label="분석 상태 요약">
           <div className="signal-head">
             <span>LIVE SIGNAL</span>
-            <b>{hasRun ? "분석 완료" : "샘플 데이터"}</b>
+            <b>{analysisMode === "llm" ? "개인 AI 연결" : hasRun ? "로컬 분석" : "샘플 데이터"}</b>
           </div>
           <div className="signal-score">
             <strong>{evaluation.metrics.overall}</strong>
@@ -123,7 +221,7 @@ export default function Home() {
           <dl>
             <div>
               <dt>VOC</dt>
-              <dd>{sampleFeedback.length}</dd>
+              <dd>{activeFeedback.length}</dd>
             </div>
             <div>
               <dt>THEMES</dt>
@@ -145,7 +243,7 @@ export default function Home() {
         <span>03</span>
         <p>Eval before ship</p>
         <span>04</span>
-        <p>Local-first demo</p>
+        <p>Personal AI ready</p>
       </section>
 
       <section className="workspace" id="workspace">
@@ -155,18 +253,69 @@ export default function Home() {
             <h2>하나의 VOC에서 출시 판단까지</h2>
           </div>
           <p>
-            실제 API 키 없이도 분석·평가 흐름을 재현하며, 운영 환경에서는
-            LLM 어댑터로 교체할 수 있습니다.
+            API 키 없이 로컬 엔진으로 체험하고, 개인 OpenAI 키를 연결하면
+            입력한 VOC를 실제 AI가 근거와 함께 분석합니다.
           </p>
         </div>
+
+        <section className="live-control" aria-labelledby="live-control-title">
+          <div className="live-control-head">
+            <div>
+              <p className="section-index">LIVE INPUT · PERSONAL AI</p>
+              <h3 id="live-control-title">내 VOC로 직접 분석하기</h3>
+            </div>
+            <span className={analysisMode === "llm" ? "connection-state connected" : "connection-state"}>
+              <i /> {analysisMode === "llm" ? "AI CONNECTED" : apiKey ? "KEY READY" : "LOCAL READY"}
+            </span>
+          </div>
+          <div className="live-control-grid">
+            <div className="connection-card">
+              <label htmlFor="personal-api-key">개인 OpenAI API 키</label>
+              <input
+                id="personal-api-key"
+                type="password"
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+                placeholder="sk-…"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <label htmlFor="ai-model">분석 모델</label>
+              <select id="ai-model" value={model} onChange={(event) => setModel(event.target.value)}>
+                <option value="gpt-5.4-mini">GPT-5.4 mini · 권장</option>
+                <option value="gpt-5.4-nano">GPT-5.4 nano · 저비용</option>
+                <option value="gpt-5.4">GPT-5.4 · 고품질</option>
+              </select>
+              <p>키는 브라우저 저장소나 데이터베이스에 저장하지 않으며, 분석 요청 때만 서버를 거쳐 OpenAI로 전달됩니다. 개인정보를 제거한 VOC만 입력해주세요.</p>
+              {apiKey && <button className="disconnect-button" onClick={disconnectAi}>연결 정보 지우기</button>}
+            </div>
+            <div className="voc-input-card">
+              <label htmlFor="raw-feedback">VOC 원문 · 한 줄에 한 건</label>
+              <textarea
+                id="raw-feedback"
+                value={rawFeedback}
+                onChange={(event) => setRawFeedback(event.target.value)}
+                placeholder={'[5] 저장한 메모가 사라졌어요\n[4] AI 요약의 근거를 찾기 어려워요\n[3] 팀원에게 결과를 공유하고 싶어요'}
+                rows={7}
+              />
+              <div className="input-actions">
+                <button className="sample-button" onClick={resetToSample}>샘플 24건 불러오기</button>
+                <button className="primary-button" onClick={runAnalysis} disabled={isRunning}>
+                  {isRunning ? "분석 중…" : apiKey ? "개인 AI로 분석 ↗" : "로컬로 분석 ↗"}
+                </button>
+              </div>
+              <p className="run-message" role="status">{runMessage}</p>
+            </div>
+          </div>
+        </section>
 
         <div className="app-shell">
           <aside className="app-sidebar">
             <div className="dataset-title">
               <span className="dataset-icon">D</span>
               <div>
-                <strong>모바일 생산성 앱</strong>
-                <p>최근 30일 VOC</p>
+                <strong>{activeFeedback[0]?.id.startsWith("USER-") ? "사용자 입력 데이터" : "모바일 생산성 앱"}</strong>
+                <p>{analysisMode === "llm" ? "개인 AI 분석" : "로컬 분석"}</p>
               </div>
             </div>
             <div className="sidebar-label">WORKFLOW</div>
@@ -185,7 +334,7 @@ export default function Home() {
             ))}
             <div className="sidebar-meta">
               <p>DATASET HEALTH</p>
-              <strong>24 / 24 valid</strong>
+              <strong>{activeFeedback.length} / {activeFeedback.length} valid</strong>
               <div className="mini-progress">
                 <span />
               </div>
@@ -201,7 +350,7 @@ export default function Home() {
                     <span className="view-kicker">DISCOVER</span>
                     <h3>고객 문제 신호</h3>
                   </div>
-                  <div className="mode-pill">로컬 평가 엔진</div>
+                  <div className="mode-pill">{analysisMode === "llm" ? `${model} · LIVE` : "로컬 평가 엔진"}</div>
                 </div>
 
                 <div className="theme-grid">
@@ -276,7 +425,7 @@ export default function Home() {
                   <div className="ranking-list">
                     {analysis.themes.map((theme, index) => (
                       <div className="ranking-row" key={theme.key}>
-                        <span>0{index + 1}</span>
+                        <span>{String(index + 1).padStart(2, "0")}</span>
                         <strong>{theme.label}</strong>
                         <div>
                           <i style={{ width: `${theme.opportunityScore}%` }} />
@@ -385,7 +534,7 @@ export default function Home() {
                 <div className="eval-table-wrap">
                   <div className="evidence-list-head">
                     <strong>골든셋 시나리오</strong>
-                    <span>{evaluation.cases.length} regression tests</span>
+                    <span>{evaluation.cases.length} baseline regression tests</span>
                   </div>
                   <div className="eval-table" role="table">
                     <div className="eval-row eval-head" role="row">

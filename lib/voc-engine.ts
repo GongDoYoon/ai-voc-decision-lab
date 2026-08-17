@@ -17,7 +17,7 @@ export interface GoldenCase {
 }
 
 export interface ThemeInsight {
-  key: ThemeKey;
+  key: string;
   label: string;
   summary: string;
   recommendation: string;
@@ -140,8 +140,10 @@ export function analyzeFeedback(feedback: Feedback[]): AnalysisResult {
   return { feedbackCount: feedback.length, themes, unclassifiedIds };
 }
 
-export function buildPrd(analysis: AnalysisResult) {
-  const top = analysis.themes[0];
+export function buildPrd(analysis: AnalysisResult, selectedKey?: string) {
+  const top =
+    analysis.themes.find((theme) => theme.key === selectedKey) ??
+    analysis.themes[0];
   if (!top) throw new Error("PRD를 만들려면 분류된 VOC가 필요합니다.");
 
   return {

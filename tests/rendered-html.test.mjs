@@ -23,6 +23,8 @@ test("server-renders the finished product page", async () => {
   assert.match(html, /AI VOC Decision Lab/);
   assert.match(html, /근거로 결정하는/);
   assert.match(html, /고객 문제 신호/);
+  assert.match(html, /내 VOC로 직접 분석하기/);
+  assert.match(html, /개인 OpenAI API 키/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
